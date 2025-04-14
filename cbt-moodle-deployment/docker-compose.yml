@@ -1,0 +1,33 @@
+# version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: moodle_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./db-data:/var/lib/mysql
+
+  moodle:
+    image: ${MOODLE_IMAGE}
+    container_name: moodle_web
+    depends_on:
+      - db
+    ports:
+      - "${MOODLE_PORT}:80"
+    environment:
+      MOODLE_DBTYPE: mysqli
+      MOODLE_DBHOST: moodle_db
+      MOODLE_DBNAME: ${MYSQL_DATABASE}
+      MOODLE_DBUSER: ${MYSQL_USER}
+      MOODLE_DBPASS: ${MYSQL_PASSWORD}
+    volumes:
+      - moodle-data:/var/www/html
+
+volumes:
+  moodle-data:
