@@ -1,14 +1,13 @@
 #!/bin/bash
 
-echo "üßπ Resetting Moodle CBT Deployment..."
+echo "Ì∑π Resetting Moodle CBT Deployment..."
 
 # Stop and remove containers
 docker-compose down
 
-# Optional: Clear the MySQL data
-echo "üßº Deleting MySQL data..."
+# Optionally clear volumes
+echo "Ì∑º Deleting MySQL data..."
 rm -rf db-data/*
 
-# Re-run installation
 echo "‚ôªÔ∏è Redeploying Moodle..."
 ./install.sh

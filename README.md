@@ -143,7 +143,10 @@ echo "🚀 Deploying containers using docker-compose..."
 docker-compose up -d
 
 echo "✅ Moodle is running at http://localhost:${MOODLE_PORT}"
+
+chmod +x install.sh
 ```
+![](./img/3.install-sh.png)
 
 ## 🔁 STEP 4: `reset.sh` – Reset Environment
 
@@ -157,7 +160,8 @@ Use this script if something goes wrong. It:
 
 - Redeploys Moodle
 
-```bash
+```
+cat > reset.sh <<'EOF'
 #!/bin/bash
 
 echo "🧹 Resetting Moodle CBT Deployment..."
@@ -165,13 +169,15 @@ echo "🧹 Resetting Moodle CBT Deployment..."
 # Stop and remove containers
 docker-compose down
 
-# Optional: Clear the MySQL data
+# Optionally clear volumes
 echo "🧼 Deleting MySQL data..."
 rm -rf db-data/*
 
-# Re-run installation
 echo "♻️ Redeploying Moodle..."
 ./install.sh
+EOF
+
+chmod +x reset.sh
 ```
 
 ## 🗄️ STEP 5: `backup.sh` – Backup Moodle + DB Data
@@ -180,44 +186,26 @@ echo "♻️ Redeploying Moodle..."
 
 Backs up Moodle data and MySQL database to a backup folder with date/time stamp.
 
-```bash
+```
+cat > backup.sh <<'EOF'
 #!/bin/bash
 
-# Get timestamp for backup naming
 DATE=$(date +%Y-%m-%d_%H-%M)
 BACKUP_DIR="backups/backup_$DATE"
-
-# Create backup folder
 mkdir -p $BACKUP_DIR
 
 echo "📁 Backing up DB and Moodle data..."
-
-# Copy MySQL data
 cp -r db-data $BACKUP_DIR/
-
-# Backup Moodle files from volume using busybox
 docker run --rm --volumes-from moodle_web -v $(pwd):/backup busybox tar czf /backup/$BACKUP_DIR/moodle-data.tar.gz /var/www/html
 
 echo "✅ Backup complete: $BACKUP_DIR"
+EOF
+
+chmod +x backup.sh
 ```
 
-## ✅ Step 6: Run the Deployment Script
+![](./img/14.backup-sh.png)
 
-Now run the script to deploy your Moodle CBT environment:
-
-```bash
-./install.sh
-```
-
-**🔍 What This Does:**
-
-- Reads variables from `.env`
-
-- Pulls your Docker image if necessary (locally cached images are reused)
-
-- Runs docker-compose up -d to deploy the Moodle and MySQL containers in the background
-
-![](./img/3.install-sh.png)
 
 ## ✅ Step 7: Verify Deployment
 
@@ -268,7 +256,7 @@ ls -ld /var/www/html
 
 - My moodle folder exists inside /var/www/html ✅
 
-- The permissions are wide open (drwxrwxrwx), so access shouldn't be blocked by file permissions ❗
+- The permissions are wide open (**drwxrwxrwx**), so access shouldn't be blocked by file permissions ❗
 
 - The folder is owned by www-data, which is what Apache runs as — also ✅
 
@@ -403,6 +391,8 @@ All components and plugins were successfully installed and configured without er
 **Click Continue**
 
 ![](./img/12.admin-config-page.png)
+
+![](./img/13.admin-config-page2.png)
 
 On this page you should configure your main administrator account which will have complete control over the site. Make sure you give it a secure username and password as well as a valid email address. You can create more admin accounts later on.
 
