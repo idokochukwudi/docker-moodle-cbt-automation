@@ -1,23 +1,27 @@
 # Automating On-Premise Moodle CBT Deployment using Docker and Shell Scripting
 
-## 🗂️ OBJECTIVE
-To:
+## 🧾 Introduction
+Deploying Moodle manually on bare-metal servers can be time-consuming and error-prone. This project simplifies and automates the deployment of a fully functional Moodle-based **Computer-Based Testing (CBT)** system using **Docker containers** and **Bash scripts**, making it portable, repeatable, and production-ready for on-premise use.
 
-- Pull a prebuilt Moodle Docker image from **my Docker repository**
+## 🎯 Objectives
+- Automate the deployment of a custom Moodle Docker image with a MySQL backend
 
-- Automatically deploy it along with a **MySQL database** using **Docker Compose**
+- Use Docker Compose to orchestrate containers efficiently
 
-- Automate the deployment with a **full-featured Bash script**
+- Implement shell scripts to install, reset, and backup the CBT environment
 
-- Document all steps clearly for future reuse and demonstration
+- Ensure the system is accessible across the local network
 
-## 🧰 REQUIREMENTS
+- Troubleshoot and fix deployment issues related to Apache and volume permissions
+
+## ⚙️ Requirements
 
 - **Docker:**	Container engine
 - **Docker Compose:**	Manage multi-container app
 - **Bash Shell:**	Automate deployment with scripts
 - **DockerHub Repo:**	Source of your Moodle image
 - **Ubuntu Server:**	On-premise deployment environment
+- **LAN Router/IP:** (To support local network access)
 
 ## 📁 FOLDER STRUCTURE
 
@@ -396,7 +400,133 @@ All components and plugins were successfully installed and configured without er
 
 On this page you should configure your main administrator account which will have complete control over the site. Make sure you give it a secure username and password as well as a valid email address. You can create more admin accounts later on.
 
+## 📡 Enable Moodle Access Across Local Network
 
+### 🎯 Objective  
+Configure the **Moodle web** application running in a **Docker container** so that client computers connected to the same local network **(via router**) can access it using the **host's IP address** instead of `localhost`.
 
+## 🖥️ Architecture Diagram
 
+Below is a visual representation of how your local network accesses Moodle:
 
+![](./img/18.visual-rep.png)
+
+Client computers connected to the same router can access the Moodle instance via the IP and port, e.g., http://192.168.0.165:8080.
+
+---
+
+## 🔧 Steps Implemented
+
+1. **Identify Host IP Address**
+   - Run the command to find your router-assigned IP:
+     ```bash
+     ipconfig
+     ```
+   - Locate the **IPv4 address** (e.g., `192.168.0.165`).
+
+     ![](./img/15.locate-ip.png)
+
+2. **Access the Moodle Container**
+   - Start an interactive bash session inside the container:
+
+     ```bash
+     docker exec -it moodle_web bash
+     ```
+
+3. **Edit the Moodle Configuration File**
+   - Open the config file using `nano`:
+     ```bash
+     nano /var/www/html/moodle/config.php
+     ```
+   - Locate the following line:
+     ```php
+     $CFG->wwwroot = 'http://localhost:8080';
+     ```
+   - Replace it with:
+     ```php
+     $CFG->wwwroot = 'http://192.168.0.165:8080';
+     ```
+     > ⚠️ Replace `192.168.0.165` with your actual host machine IP if different.
+
+     ![](./img/16.root.png)
+
+4. **Save and Exit**
+   - Press `Ctrl + O` → `Enter` to save  
+   - Press `Ctrl + X` to exit the editor
+
+5. **Exit the Container**
+   ```bash
+   exit
+   ```
+6. **Restart the Moodle Container**
+
+   From your host terminal:
+
+    ```bash
+    docker restart moodle_web
+    ```
+
+## ✅ Result
+Client devices on the same `Wi-Fi` or LAN network can now access the **Moodle application** using the **host's IP address**:
+
+📥 URL:
+
+```
+http://<host_ip address>:8080
+```
+![](./img/17.app-accessed-with-newip.png)
+
+The application is now reachable across my local network!
+
+## ⚠️ Errors & Solutions
+
+### Error:
+
+```
+Forbidden
+You don't have permission to access this resource.
+```
+
+### Cause:
+
+Apache couldn't serve Moodle due to missing `<Directory>` directives or permission issues in the container.
+
+### Solution:
+
+- Add the required `<Directory>` block in Apache’s config (`000-default.conf`)
+
+- Set **DocumentRoot** to `/var/www/html/moodle`
+
+- Restart Apache using **service apache2 restart**
+
+**✅ Result:** Moodle becomes accessible at `http://localhost:8080`
+
+## 🌐 Enable Moodle Access Across Local Network
+
+To allow other systems within your LAN to access Moodle:
+
+1. Get Local IP Address
+
+Run:
+
+```
+ip a | grep inet
+```
+
+Note your server IP, e.g., `192.168.1.100`
+
+2. **Ensure Firewall/Router Allows Port 8080**
+
+- Make sure port `8080` is open on your Ubuntu firewall and router (if applicable)
+
+Access from Another System in LAN:
+
+```
+http://192.168.1.100:8080
+```
+
+🧪 Tested successfully on multiple LAN-connected devices, confirming stable access across browsers.
+
+## ✅ Conclusion
+
+This project delivers a modular, automated Moodle CBT system using Docker, ready for on-premise deployment. With just one script, Moodle and MySQL spin up in containers, configured securely using environment variables. From deployment to backup and reset, everything is containerized and streamlined—perfect for educational institutions, especially in LAN-first environments.
