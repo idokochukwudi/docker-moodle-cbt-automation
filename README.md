@@ -527,6 +527,76 @@ http://192.168.1.100:8080
 
 🧪 Tested successfully on multiple LAN-connected devices, confirming stable access across browsers.
 
+# 🔐 Reset Moodle Admin Password via MySQL (Docker)
+
+If you've forgotten the Moodle admin password while running Moodle via Docker, follow these steps:
+
+---
+
+## ✅ Step 1: Access the MySQL Container
+
+```bash
+docker exec -it moodle_db bash
+```
+
+---
+
+## ✅ Step 2: Login to MySQL
+
+```bash
+mysql -u root -p
+```
+
+> Enter the root password when prompted (e.g., `Admin@123`).
+
+---
+
+## ✅ Step 3: Select the Moodle Database
+
+```sql
+USE moodle_db;
+```
+
+---
+
+## ✅ Step 4: Verify the Admin User
+
+```sql
+SELECT id, username, email FROM mdl_user WHERE username = 'admin';
+```
+
+---
+
+## ✅ Step 5: Reset the Password
+
+Replace `newpass123` with your desired password:
+
+```sql
+UPDATE mdl_user
+SET password = MD5('newpass123')
+WHERE username = 'admin';
+```
+
+---
+
+## ✅ Step 6: Exit MySQL
+
+```sql
+exit
+```
+
+---
+
+## ✅ Step 7: Log in to Moodle
+
+- **Username:** `admin`
+- **Password:** `newpass123`
+
+---
+
+> ⚠️ This method uses the older MD5 hashing — secure enough for local testing. For production, use Moodle’s CLI tool or reset via email if SMTP is configured.
+
+
 ## ✅ Conclusion
 
 This project delivers a modular, automated Moodle CBT system using Docker, ready for on-premise deployment. With just one script, Moodle and MySQL spin up in containers, configured securely using environment variables. From deployment to backup and reset, everything is containerized and streamlined—perfect for educational institutions, especially in LAN-first environments.
